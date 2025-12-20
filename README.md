@@ -23,7 +23,7 @@ A fullstack Next.js application for tracking where you sleep during trips, helpi
 
 ### Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 18+ and Yarn
 - Git
 
 ### Installation
@@ -32,7 +32,7 @@ A fullstack Next.js application for tracking where you sleep during trips, helpi
 
 2. **Install dependencies**:
    ```bash
-   npm install
+   yarn install
    ```
 
 3. **Set up environment variables**:
@@ -61,7 +61,7 @@ A fullstack Next.js application for tracking where you sleep during trips, helpi
 
 5. **Run the development server**:
    ```bash
-   npm run dev
+   yarn dev
    ```
 
 6. **Open your browser** and navigate to [http://localhost:3000](http://localhost:3000)
@@ -75,15 +75,15 @@ A fullstack Next.js application for tracking where you sleep during trips, helpi
 
 ## Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:ui` - Run tests with UI
-- `npm run db:migrate` - Run database migrations
-- `npm run db:generate` - Generate Prisma client
-- `npm run db:studio` - Open Prisma Studio (database GUI)
+- `yarn dev` - Start development server
+- `yarn build` - Build for production
+- `yarn start` - Start production server
+- `yarn test` - Run tests
+- `yarn test:watch` - Run tests in watch mode
+- `yarn test:ui` - Run tests with UI
+- `yarn db:migrate` - Run database migrations
+- `yarn db:generate` - Generate Prisma client
+- `yarn db:studio` - Open Prisma Studio (database GUI)
 
 ## Project Structure
 
@@ -119,12 +119,12 @@ The project includes comprehensive tests for:
 
 Run all tests:
 ```bash
-npm test
+yarn test
 ```
 
 Run tests in watch mode:
 ```bash
-npm run test:watch
+yarn test:watch
 ```
 
 ## Database Schema
@@ -165,8 +165,8 @@ All API routes require authentication.
 
 3. **Build and deploy**:
    ```bash
-   npm run build
-   npm start
+   yarn build
+   yarn start
    ```
 
 ## License
