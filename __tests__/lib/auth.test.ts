@@ -30,10 +30,13 @@ describe('Authentication', () => {
 
       const provider = authOptions.providers[0];
       if (provider && 'authorize' in provider) {
-        const result = await provider.authorize({
-          email: 'test@example.com',
-          password: 'password123',
-        });
+        const result = await provider.authorize(
+          {
+            email: 'test@example.com',
+            password: 'password123',
+          },
+          {} as any
+        );
 
         expect(result).not.toBeNull();
         expect(result?.email).toBe('test@example.com');
@@ -52,10 +55,13 @@ describe('Authentication', () => {
 
       const provider = authOptions.providers[0];
       if (provider && 'authorize' in provider) {
-        const result = await provider.authorize({
-          email: 'test@example.com',
-          password: 'wrongpassword',
-        });
+        const result = await provider.authorize(
+          {
+            email: 'test@example.com',
+            password: 'wrongpassword',
+          },
+          {} as any
+        );
 
         expect(result).toBeNull();
       }
@@ -64,10 +70,13 @@ describe('Authentication', () => {
     it('should reject non-existent user', async () => {
       const provider = authOptions.providers[0];
       if (provider && 'authorize' in provider) {
-        const result = await provider.authorize({
-          email: 'nonexistent@example.com',
-          password: 'password123',
-        });
+        const result = await provider.authorize(
+          {
+            email: 'nonexistent@example.com',
+            password: 'password123',
+          },
+          {} as any
+        );
 
         expect(result).toBeNull();
       }
@@ -76,16 +85,22 @@ describe('Authentication', () => {
     it('should reject request with missing credentials', async () => {
       const provider = authOptions.providers[0];
       if (provider && 'authorize' in provider) {
-        const result1 = await provider.authorize({
-          email: '',
-          password: 'password123',
-        });
+        const result1 = await provider.authorize(
+          {
+            email: '',
+            password: 'password123',
+          },
+          {} as any
+        );
         expect(result1).toBeNull();
 
-        const result2 = await provider.authorize({
-          email: 'test@example.com',
-          password: '',
-        });
+        const result2 = await provider.authorize(
+          {
+            email: 'test@example.com',
+            password: '',
+          },
+          {} as any
+        );
         expect(result2).toBeNull();
       }
     });

@@ -21,6 +21,10 @@ vi.mock('@/lib/auth', () => ({
   authOptions: {},
 }));
 
+vi.mock('next-auth', () => ({
+  getServerSession: vi.fn(),
+}));
+
 describe('Locations API', () => {
   let userId: string;
   let otherUserId: string;
