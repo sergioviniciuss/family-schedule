@@ -6,14 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: 18.x
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         id: yarn-cache
         with:
           path: |
@@ -30,11 +30,17 @@ jobs:
       - name: Generate Prisma Client
         run: yarn db:generate
 
+      - name: TypeScript Check
+        run: yarn type-check
+        continue-on-error: false
+
       - name: Linting
         run: yarn lint
+        continue-on-error: false
 
       - name: Test
         run: yarn test:ci
+        continue-on-error: false
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'file:./test.db' }}
           TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL || 'file:./test.db' }}
@@ -42,6 +48,7 @@ jobs:
 
       - name: Build
         run: yarn build
+        continue-on-error: false
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'file:./test.db' }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'test-secret-key-for-ci-only' }}
