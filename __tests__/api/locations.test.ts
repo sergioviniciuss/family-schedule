@@ -1,16 +1,27 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { GET, POST, PATCH, DELETE } from '@/app/api/locations/route';
 import { NextRequest } from 'next/server';
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.TEST_DATABASE_URL || 'file:./test.db',
+// Create prisma instance using hoisted to ensure it's available in the mock factory
+const testPrisma = vi.hoisted(() => {
+  const { PrismaClient } = require('@prisma/client');
+  return new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL || 'file:./prisma/test.db',
+      },
     },
-  },
+  });
 });
+
+// Mock prisma to use the same test database instance - must be before route imports
+vi.mock('@/lib/prisma', () => ({
+  prisma: testPrisma,
+}));
+
+// Import routes after mocks are set up
+import { GET, POST, PATCH, DELETE } from '@/app/api/locations/route';
 
 // Mock NextAuth
 vi.mock('next-auth', () => ({
@@ -21,20 +32,24 @@ vi.mock('@/lib/auth', () => ({
   authOptions: {},
 }));
 
-vi.mock('next-auth', () => ({
-  getServerSession: vi.fn(),
-}));
-
 describe('Locations API', () => {
   let userId: string;
   let otherUserId: string;
+  // Use the same prisma instance from the mock
+  const prisma = testPrisma;
 
   beforeEach(async () => {
-    // Create test users
+    // Clean up before creating new users
+    await prisma.sleepEntry.deleteMany();
+    await prisma.location.deleteMany();
+    await prisma.user.deleteMany();
+
+    // Create test users with unique emails per test run
     const hashedPassword = await bcrypt.hash('password123', 10);
+    const timestamp = Date.now();
     const user = await prisma.user.create({
       data: {
-        email: 'test@example.com',
+        email: `test-${timestamp}@example.com`,
         password: hashedPassword,
       },
     });
@@ -42,16 +57,18 @@ describe('Locations API', () => {
 
     const otherUser = await prisma.user.create({
       data: {
-        email: 'other@example.com',
+        email: `other-${timestamp}@example.com`,
         password: hashedPassword,
       },
     });
     otherUserId = otherUser.id;
 
-    // Mock session
+
+    // Mock session - reset and set up fresh for each test
     const { getServerSession } = await import('next-auth');
+    vi.mocked(getServerSession).mockReset();
     vi.mocked(getServerSession).mockResolvedValue({
-      user: { id: userId, email: 'test@example.com' },
+      user: { id: userId, email: `test-${timestamp}@example.com` },
     } as any);
   });
 
@@ -86,6 +103,11 @@ describe('Locations API', () => {
     });
 
     it('should only return locations for the authenticated user', async () => {
+      // Ensure users exist (they should be created in beforeEach)
+      if (!userId || !otherUserId) {
+        throw new Error('Users not set up properly in beforeEach');
+      }
+
       await prisma.location.create({
         data: {
           userId,

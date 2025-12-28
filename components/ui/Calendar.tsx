@@ -22,11 +22,90 @@ export const Calendar = ({
   startDate,
   endDate,
 }: CalendarProps) => {
-  const [currentMonth, setCurrentMonth] = React.useState(new Date());
-
   const today = new Date();
   const start = startDate || new Date(today.getFullYear(), today.getMonth() - 2, 1);
   const end = endDate || new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  // Initialize currentMonth - always use the same logic for SSR and client to avoid hydration mismatch
+  // We'll restore from localStorage after hydration in a useEffect
+  const [currentMonth, setCurrentMonth] = React.useState(() => {
+    const normalizedStart = new Date(start.getFullYear(), start.getMonth(), 1);
+    const normalizedEnd = new Date(end.getFullYear(), end.getMonth(), 1);
+    
+    if (startDate) {
+      const normalizedDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      // Clamp to valid range
+      if (normalizedDate < normalizedStart) return normalizedStart;
+      if (normalizedDate > normalizedEnd) return normalizedEnd;
+      return normalizedDate;
+    }
+    
+    // Default to current month, clamped to valid range
+    // Don't use localStorage here to avoid hydration mismatch
+    const normalizedToday = new Date(today.getFullYear(), today.getMonth(), 1);
+    if (normalizedToday < normalizedStart) return normalizedStart;
+    if (normalizedToday > normalizedEnd) return normalizedEnd;
+    return normalizedToday;
+  });
+
+  // Track if component has mounted (client-side only)
+  const [hasMounted, setHasMounted] = React.useState(false);
+
+  // Restore from localStorage after hydration (client-only)
+  React.useEffect(() => {
+    setHasMounted(true);
+    
+    // Only restore from localStorage if startDate is not provided
+    // This ensures server and client render the same initial value
+    if (!startDate && typeof window !== 'undefined') {
+      const savedMonth = localStorage.getItem('calendar-current-month');
+      if (savedMonth) {
+        try {
+          const savedDate = new Date(savedMonth);
+          if (!isNaN(savedDate.getTime())) {
+            const normalizedStart = new Date(start.getFullYear(), start.getMonth(), 1);
+            const normalizedEnd = new Date(end.getFullYear(), end.getMonth(), 1);
+            const normalizedSaved = new Date(savedDate.getFullYear(), savedDate.getMonth(), 1);
+            
+            // Only use saved date if it's within the valid range
+            if (normalizedSaved >= normalizedStart && normalizedSaved <= normalizedEnd) {
+              setCurrentMonth(normalizedSaved);
+            }
+          }
+        } catch (e) {
+          // Invalid date in localStorage, ignore it
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - we intentionally don't include start/end to avoid re-running
+
+  // Save currentMonth to localStorage whenever it changes (but only after mount)
+  React.useEffect(() => {
+    if (hasMounted && typeof window !== 'undefined') {
+      localStorage.setItem('calendar-current-month', currentMonth.toISOString());
+    }
+  }, [currentMonth, hasMounted]);
+
+  // Update currentMonth when startDate or endDate prop changes
+  React.useEffect(() => {
+    const normalizedStart = new Date(start.getFullYear(), start.getMonth(), 1);
+    const normalizedEnd = new Date(end.getFullYear(), end.getMonth(), 1);
+    
+    setCurrentMonth((prev) => {
+      const normalizedPrev = new Date(prev.getFullYear(), prev.getMonth(), 1);
+      
+      // If current month is outside the new range, clamp it
+      if (normalizedPrev < normalizedStart) {
+        return normalizedStart;
+      }
+      if (normalizedPrev > normalizedEnd) {
+        return normalizedEnd;
+      }
+      
+      return prev;
+    });
+  }, [startDate, endDate, start, end]);
 
   const entriesMap = React.useMemo(() => {
     const map = new Map<string, SleepEntryWithLocation>();
@@ -55,7 +134,21 @@ export const Calendar = ({
       } else {
         newDate.setMonth(prev.getMonth() + 1);
       }
-      return newDate;
+      
+      // Normalize to first day of month for comparison
+      const normalizedNew = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+      const normalizedStart = new Date(start.getFullYear(), start.getMonth(), 1);
+      const normalizedEnd = new Date(end.getFullYear(), end.getMonth(), 1);
+      
+      // Clamp to valid range
+      if (normalizedNew < normalizedStart) {
+        return normalizedStart;
+      }
+      if (normalizedNew > normalizedEnd) {
+        return normalizedEnd;
+      }
+      
+      return normalizedNew;
     });
   };
 
@@ -75,6 +168,13 @@ export const Calendar = ({
 
   const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentMonth);
   const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  
+  // Check if we're at the boundaries
+  const normalizedCurrent = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const normalizedStart = new Date(start.getFullYear(), start.getMonth(), 1);
+  const normalizedEnd = new Date(end.getFullYear(), end.getMonth(), 1);
+  const canGoPrev = normalizedCurrent > normalizedStart;
+  const canGoNext = normalizedCurrent < normalizedEnd;
 
   const days = [];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -95,7 +195,13 @@ export const Calendar = ({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => navigateMonth('prev')}
-          className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+          disabled={!canGoPrev}
+          className={cn(
+            "px-3 py-1 rounded transition-colors",
+            canGoPrev
+              ? "hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              : "opacity-30 cursor-not-allowed"
+          )}
           type="button"
         >
           ←
@@ -103,7 +209,13 @@ export const Calendar = ({
         <h2 className="text-lg font-semibold">{monthName}</h2>
         <button
           onClick={() => navigateMonth('next')}
-          className="px-3 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800"
+          disabled={!canGoNext}
+          className={cn(
+            "px-3 py-1 rounded transition-colors",
+            canGoNext
+              ? "hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              : "opacity-30 cursor-not-allowed"
+          )}
           type="button"
         >
           →
