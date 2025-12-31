@@ -280,7 +280,7 @@ export const Calendar = ({
               )}
               type="button"
             >
-              {entry && onDeleteEntry && (
+              {entry && onDeleteEntry && isSelected && (
                 <button
                   onClick={(e) => handleDeleteClick(e, dateStr)}
                   className="absolute top-0.5 right-0.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors z-10 p-0.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
