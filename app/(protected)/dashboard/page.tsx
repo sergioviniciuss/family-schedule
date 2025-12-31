@@ -7,7 +7,7 @@ import { DateRangePicker } from '@/components/dashboard/DateRangePicker';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Location, SleepEntryWithLocation } from '@/types';
-import { formatDate, getDateRange } from '@/lib/utils';
+import { formatDate, getDateRange, parseLocalDate } from '@/lib/utils';
 
 export default function DashboardPage() {
   const [locations, setLocations] = React.useState<Location[]>([]);
@@ -115,7 +115,7 @@ export default function DashboardPage() {
 
   const periodLabel =
     dateFrom && dateTo
-      ? `${new Date(dateFrom).toLocaleDateString()} - ${new Date(dateTo).toLocaleDateString()}`
+      ? `${parseLocalDate(dateFrom).toLocaleDateString()} - ${parseLocalDate(dateTo).toLocaleDateString()}`
       : 'Selected period';
 
   return (
@@ -135,6 +135,8 @@ export default function DashboardPage() {
               locations={locations}
               selectedDate={selectedDate}
               onDateSelect={setSelectedDate}
+              startDate={dateFrom || undefined}
+              endDate={dateTo || undefined}
             />
           </div>
         </div>

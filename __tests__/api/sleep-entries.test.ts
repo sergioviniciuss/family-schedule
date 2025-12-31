@@ -1,16 +1,27 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { GET, POST } from '@/app/api/sleep-entries/route';
 import { NextRequest } from 'next/server';
 
-const prisma = new PrismaClient({
-  datasources: {
-    db: {
-      url: process.env.TEST_DATABASE_URL || 'file:./test.db',
+// Create prisma instance using hoisted to ensure it's available in the mock factory
+const testPrisma = vi.hoisted(() => {
+  const { PrismaClient } = require('@prisma/client');
+  return new PrismaClient({
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL || 'file:./prisma/test.db',
+      },
     },
-  },
+  });
 });
+
+// Mock prisma to use test database - must be before route imports
+vi.mock('@/lib/prisma', () => ({
+  prisma: testPrisma,
+}));
+
+// Import routes after mocks are set up
+import { GET, POST } from '@/app/api/sleep-entries/route';
 
 // Mock NextAuth
 vi.mock('next-auth', () => ({
@@ -24,13 +35,21 @@ vi.mock('@/lib/auth', () => ({
 describe('Sleep Entries API', () => {
   let userId: string;
   let locationId: string;
+  // Use the same prisma instance from the mock
+  const prisma = testPrisma;
 
   beforeEach(async () => {
-    // Create test user
+    // Clean up before creating new users
+    await prisma.sleepEntry.deleteMany();
+    await prisma.location.deleteMany();
+    await prisma.user.deleteMany();
+
+    // Create test user with unique email per test run
     const hashedPassword = await bcrypt.hash('password123', 10);
+    const timestamp = Date.now();
     const user = await prisma.user.create({
       data: {
-        email: 'test@example.com',
+        email: `test-${timestamp}@example.com`,
         password: hashedPassword,
       },
     });
@@ -46,10 +65,11 @@ describe('Sleep Entries API', () => {
     });
     locationId = location.id;
 
-    // Mock session
+    // Mock session - reset and set up fresh for each test
     const { getServerSession } = await import('next-auth');
+    vi.mocked(getServerSession).mockReset();
     vi.mocked(getServerSession).mockResolvedValue({
-      user: { id: userId, email: 'test@example.com' },
+      user: { id: userId, email: `test-${timestamp}@example.com` },
     } as any);
   });
 
@@ -199,7 +219,7 @@ describe('Sleep Entries API', () => {
       expect(response.status).toBe(201);
       expect(data.locationId).toBe(otherLocation.id);
 
-      // Verify only one entry exists
+      // Verify only one entry exists (prisma already declared above)
       const entries = await prisma.sleepEntry.findMany({
         where: { userId, date: '2024-01-15' },
       });
@@ -233,9 +253,10 @@ describe('Sleep Entries API', () => {
     });
 
     it('should return 404 if location does not belong to user', async () => {
+      const timestamp = Date.now();
       const otherUser = await prisma.user.create({
         data: {
-          email: 'other@example.com',
+          email: `other-${timestamp}@example.com`,
           password: await bcrypt.hash('password', 10),
         },
       });
