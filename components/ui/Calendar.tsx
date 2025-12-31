@@ -25,12 +25,21 @@ export const Calendar = ({
   const today = new Date();
   
   // Normalize start and end dates to local midnight to avoid timezone issues
-  const start = startDate 
-    ? normalizeToLocalDate(startDate) 
-    : new Date(today.getFullYear(), today.getMonth() - 2, 1);
-  const end = endDate 
-    ? normalizeToLocalDate(endDate) 
-    : new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  // Memoize to prevent unnecessary re-renders and effect runs
+  const start = React.useMemo(
+    () =>
+      startDate
+        ? normalizeToLocalDate(startDate)
+        : new Date(today.getFullYear(), today.getMonth() - 2, 1),
+    [startDate]
+  );
+  const end = React.useMemo(
+    () =>
+      endDate
+        ? normalizeToLocalDate(endDate)
+        : new Date(today.getFullYear(), today.getMonth() + 1, 0),
+    [endDate]
+  );
   
   // Initialize currentMonth - always use the same logic for SSR and client to avoid hydration mismatch
   // We'll restore from localStorage after hydration in a useEffect
