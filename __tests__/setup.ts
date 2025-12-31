@@ -21,20 +21,25 @@ beforeAll(async () => {
   try {
     execSync('npx prisma migrate reset --force --skip-seed', {
       env: { ...process.env, DATABASE_URL: testDbUrl },
-      stdio: 'ignore',
+      stdio: 'inherit',
     });
   } catch (error) {
-    // Ignore errors if database doesn't exist yet
+    // Ignore errors if database doesn't exist yet - this is expected on first run
+    console.log('Database reset skipped (database may not exist yet)');
   }
 
-  // Run migrations
+  // Run migrations - this must succeed for tests to work
   try {
     execSync('npx prisma migrate deploy', {
       env: { ...process.env, DATABASE_URL: testDbUrl },
-      stdio: 'ignore',
+      stdio: 'inherit',
     });
+    console.log('Database migrations applied successfully');
   } catch (error) {
     console.error('Migration error:', error);
+    throw new Error(
+      `Failed to run database migrations. Make sure migrations are up to date and the database is accessible. Error: ${error}`
+    );
   }
 });
 
