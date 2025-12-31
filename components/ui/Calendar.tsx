@@ -265,10 +265,19 @@ export const Calendar = ({
           const isTodayDate = isToday(date);
 
           return (
-            <button
+            <div
               key={dateStr}
+              role="button"
+              tabIndex={inRange ? 0 : -1}
               onClick={() => handleDateClick(date)}
-              disabled={!inRange}
+              onKeyDown={(e) => {
+                if (inRange && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  handleDateClick(date);
+                }
+              }}
+              aria-disabled={!inRange}
+              aria-label={`${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}${entry ? `, ${entry.location.name}` : ''}${isSelected ? ', selected' : ''}`}
               className={cn(
                 'aspect-square rounded border text-sm transition-colors relative',
                 inRange
@@ -278,7 +287,6 @@ export const Calendar = ({
                 isTodayDate && 'bg-blue-50 dark:bg-blue-900/20 font-semibold',
                 !entry && inRange && 'border-gray-200 dark:border-gray-700'
               )}
-              type="button"
             >
               {entry && onDeleteEntry && isSelected && (
                 <button
@@ -308,7 +316,7 @@ export const Calendar = ({
                   <LocationBadge location={entry.location} size="sm" className="text-[10px]" />
                 )}
               </div>
-            </button>
+            </div>
           );
         })}
       </div>
