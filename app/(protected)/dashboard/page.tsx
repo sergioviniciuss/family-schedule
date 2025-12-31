@@ -135,8 +135,8 @@ export default function DashboardPage() {
               locations={locations}
               selectedDate={selectedDate}
               onDateSelect={setSelectedDate}
-              startDate={dateFrom ? parseLocalDate(dateFrom) : undefined}
-              endDate={dateTo ? parseLocalDate(dateTo) : undefined}
+              startDate={dateFrom || undefined}
+              endDate={dateTo || undefined}
             />
           </div>
         </div>
