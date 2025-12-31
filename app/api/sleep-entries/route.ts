@@ -110,3 +110,53 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const date = searchParams.get('date');
+
+    if (!date) {
+      return NextResponse.json({ error: 'Date is required' }, { status: 400 });
+    }
+
+    if (!isValidDate(date)) {
+      return NextResponse.json({ error: 'Invalid date format. Use YYYY-MM-DD' }, { status: 400 });
+    }
+
+    // Find the entry to ensure it exists and belongs to the user
+    const entry = await prisma.sleepEntry.findUnique({
+      where: {
+        userId_date: {
+          userId: session.user.id,
+          date,
+        },
+      },
+    });
+
+    if (!entry) {
+      return NextResponse.json({ error: 'Entry not found' }, { status: 404 });
+    }
+
+    // Delete the entry
+    await prisma.sleepEntry.delete({
+      where: {
+        userId_date: {
+          userId: session.user.id,
+          date,
+        },
+      },
+    });
+
+    return NextResponse.json({ success: true, date });
+  } catch (error) {
+    console.error('Error deleting sleep entry:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+

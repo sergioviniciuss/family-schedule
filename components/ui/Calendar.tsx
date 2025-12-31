@@ -10,6 +10,7 @@ interface CalendarProps {
   locations: Location[];
   selectedDate?: string;
   onDateSelect?: (date: string) => void;
+  onDeleteEntry?: (date: string) => void;
   startDate?: Date | string;
   endDate?: Date | string;
 }
@@ -19,6 +20,7 @@ export const Calendar = ({
   locations,
   selectedDate,
   onDateSelect,
+  onDeleteEntry,
   startDate,
   endDate,
 }: CalendarProps) => {
@@ -181,6 +183,11 @@ export const Calendar = ({
     onDateSelect?.(dateStr);
   };
 
+  const handleDeleteClick = (e: React.MouseEvent, date: string) => {
+    e.stopPropagation();
+    onDeleteEntry?.(date);
+  };
+
   const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentMonth);
   const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   
@@ -263,7 +270,7 @@ export const Calendar = ({
               onClick={() => handleDateClick(date)}
               disabled={!inRange}
               className={cn(
-                'aspect-square rounded border text-sm transition-colors',
+                'aspect-square rounded border text-sm transition-colors relative',
                 inRange
                   ? 'hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer'
                   : 'opacity-30 cursor-not-allowed',
@@ -276,7 +283,31 @@ export const Calendar = ({
               <div className="flex flex-col items-center justify-center h-full p-1">
                 <span className="text-xs mb-1">{date.getDate()}</span>
                 {entry && (
-                  <LocationBadge location={entry.location} size="sm" className="text-[10px]" />
+                  <div className="flex flex-col items-center gap-1 w-full">
+                    <LocationBadge location={entry.location} size="sm" className="text-[10px]" />
+                    {onDeleteEntry && (
+                      <button
+                        onClick={(e) => handleDeleteClick(e, dateStr)}
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                        aria-label="Delete entry"
+                        title="Delete entry"
+                        type="button"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3 w-3"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </button>

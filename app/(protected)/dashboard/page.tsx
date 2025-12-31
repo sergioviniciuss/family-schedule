@@ -18,6 +18,8 @@ export default function DashboardPage() {
   const [dateTo, setDateTo] = React.useState<string>('');
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [deleteConfirm, setDeleteConfirm] = React.useState<string | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
 
   // Initialize date range
   React.useEffect(() => {
@@ -113,13 +115,86 @@ export default function DashboardPage() {
     setDateTo(to);
   };
 
+  const handleDeleteRequest = (date: string) => {
+    setDeleteConfirm(date);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirm) return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/sleep-entries?date=${deleteConfirm}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Remove the entry from the local state
+        setEntries((prev) => prev.filter((e) => e.date !== deleteConfirm));
+        setDeleteConfirm(null);
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to delete entry');
+      }
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      alert('Failed to delete entry');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirm(null);
+  };
+
   const periodLabel =
     dateFrom && dateTo
       ? `${parseLocalDate(dateFrom).toLocaleDateString()} - ${parseLocalDate(dateTo).toLocaleDateString()}`
       : 'Selected period';
 
+  const deleteConfirmEntry = deleteConfirm ? entries.find((e) => e.date === deleteConfirm) : null;
+
   return (
     <div className="space-y-8">
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Are you sure you want to delete the entry for{' '}
+              <strong>
+                {parseLocalDate(deleteConfirm).toLocaleDateString()}
+              </strong>
+              {deleteConfirmEntry && (
+                <span>
+                  {' '}at <strong>{deleteConfirmEntry.location.name}</strong>
+                </span>
+              )}
+              ?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={handleCancelDelete}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
@@ -135,6 +210,7 @@ export default function DashboardPage() {
               locations={locations}
               selectedDate={selectedDate}
               onDateSelect={setSelectedDate}
+              onDeleteEntry={handleDeleteRequest}
               startDate={dateFrom || undefined}
               endDate={dateTo || undefined}
             />
