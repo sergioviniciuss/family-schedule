@@ -145,5 +145,100 @@ describe('Calendar', () => {
       expect(screen.getByText(/february 2024/i)).toBeInTheDocument();
     });
   });
+
+  describe('Timezone handling', () => {
+    it('should handle date strings (YYYY-MM-DD format) correctly', async () => {
+      // Test with date strings as they would come from the API
+      render(
+        <Calendar
+          entries={mockEntries}
+          locations={mockLocations}
+          startDate="2024-01-15"
+          endDate="2024-01-31"
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/january 2024/i)).toBeInTheDocument();
+      });
+
+      // Day 15 should be enabled (first day of range)
+      const allButtons = screen.getAllByRole('button');
+      const day15Button = allButtons.find((button) => {
+        const text = button.textContent || '';
+        const htmlButton = button as HTMLButtonElement;
+        return text.includes('15') && !htmlButton.disabled && !text.includes('→') && !text.includes('←');
+      });
+      expect(day15Button).toBeDefined();
+      expect(day15Button).not.toBeDisabled();
+    });
+
+    it('should handle Date objects created from ISO strings correctly', async () => {
+      // Simulate what dashboard does: new Date(dateFrom) where dateFrom is "2024-01-15"
+      // This creates a Date at UTC midnight
+      const startDate = new Date('2024-01-15');
+      const endDate = new Date('2024-01-31');
+      
+      render(
+        <Calendar
+          entries={mockEntries}
+          locations={mockLocations}
+          startDate={startDate}
+          endDate={endDate}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/january 2024/i)).toBeInTheDocument();
+      });
+
+      // Day 15 should be enabled, not disabled due to timezone issues
+      const allButtons = screen.getAllByRole('button');
+      const day15Button = allButtons.find((button) => {
+        const text = button.textContent || '';
+        const htmlButton = button as HTMLButtonElement;
+        return text.includes('15') && !htmlButton.disabled && !text.includes('→') && !text.includes('←');
+      });
+      expect(day15Button).toBeDefined();
+      expect(day15Button).not.toBeDisabled();
+    });
+
+    it('should correctly handle first day of month regardless of timezone', async () => {
+      const startDate = new Date('2024-01-01');
+      const endDate = new Date('2024-01-10');
+      
+      render(
+        <Calendar
+          entries={[]}
+          locations={mockLocations}
+          startDate={startDate}
+          endDate={endDate}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText(/january 2024/i)).toBeInTheDocument();
+      });
+
+      // Day 1 should be enabled
+      const allButtons = screen.getAllByRole('button');
+      const day1Button = allButtons.find((button) => {
+        const text = button.textContent || '';
+        const htmlButton = button as HTMLButtonElement;
+        return text.trim() === '1' && !htmlButton.disabled;
+      });
+      expect(day1Button).toBeDefined();
+      expect(day1Button).not.toBeDisabled();
+
+      // Day 11 should be disabled (outside range)
+      const day11Buttons = allButtons.filter((button) => {
+        const text = button.textContent || '';
+        return text.includes('11') && !text.includes('→') && !text.includes('←');
+      });
+      const day11Button = day11Buttons[0] as HTMLButtonElement;
+      expect(day11Button).toBeDefined();
+      expect(day11Button.disabled).toBe(true);
+    });
+  });
 });
 

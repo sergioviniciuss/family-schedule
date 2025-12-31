@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { SleepEntryWithLocation, Location } from '@/types';
-import { formatDate, cn } from '@/lib/utils';
+import { formatDate, cn, normalizeToLocalDate } from '@/lib/utils';
 import { LocationBadge } from './LocationBadge';
 
 interface CalendarProps {
@@ -10,8 +10,8 @@ interface CalendarProps {
   locations: Location[];
   selectedDate?: string;
   onDateSelect?: (date: string) => void;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: Date | string;
+  endDate?: Date | string;
 }
 
 export const Calendar = ({
@@ -23,8 +23,14 @@ export const Calendar = ({
   endDate,
 }: CalendarProps) => {
   const today = new Date();
-  const start = startDate || new Date(today.getFullYear(), today.getMonth() - 2, 1);
-  const end = endDate || new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  
+  // Normalize start and end dates to local midnight to avoid timezone issues
+  const start = startDate 
+    ? normalizeToLocalDate(startDate) 
+    : new Date(today.getFullYear(), today.getMonth() - 2, 1);
+  const end = endDate 
+    ? normalizeToLocalDate(endDate) 
+    : new Date(today.getFullYear(), today.getMonth() + 1, 0);
   
   // Initialize currentMonth - always use the same logic for SSR and client to avoid hydration mismatch
   // We'll restore from localStorage after hydration in a useEffect
@@ -33,7 +39,7 @@ export const Calendar = ({
     const normalizedEnd = new Date(end.getFullYear(), end.getMonth(), 1);
     
     if (startDate) {
-      const normalizedDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+      const normalizedDate = new Date(start.getFullYear(), start.getMonth(), 1);
       // Clamp to valid range
       if (normalizedDate < normalizedStart) return normalizedStart;
       if (normalizedDate > normalizedEnd) return normalizedEnd;
