@@ -17,28 +17,18 @@ const prisma = new PrismaClient({
 });
 
 beforeAll(async () => {
-  // Reset database
+  // Push schema to database - this creates/updates tables from schema.prisma
+  // This is more reliable for SQLite test databases than migrate deploy
   try {
-    execSync('npx prisma migrate reset --force --skip-seed', {
+    execSync('npx prisma db push --force-reset --skip-generate', {
       env: { ...process.env, DATABASE_URL: testDbUrl },
       stdio: 'inherit',
     });
+    console.log('Database schema pushed successfully');
   } catch (error) {
-    // Ignore errors if database doesn't exist yet - this is expected on first run
-    console.log('Database reset skipped (database may not exist yet)');
-  }
-
-  // Run migrations - this must succeed for tests to work
-  try {
-    execSync('npx prisma migrate deploy', {
-      env: { ...process.env, DATABASE_URL: testDbUrl },
-      stdio: 'inherit',
-    });
-    console.log('Database migrations applied successfully');
-  } catch (error) {
-    console.error('Migration error:', error);
+    console.error('Database schema push error:', error);
     throw new Error(
-      `Failed to run database migrations. Make sure migrations are up to date and the database is accessible. Error: ${error}`
+      `Failed to push database schema. Make sure the schema is valid and the database is accessible. Error: ${error}`
     );
   }
 });
