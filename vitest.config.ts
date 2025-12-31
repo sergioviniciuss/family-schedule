@@ -9,6 +9,27 @@ export default defineConfig({
     setupFiles: ['./__tests__/setup.ts'],
     globals: true,
     fileParallelism: false,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'json-summary', 'html'],
+      exclude: [
+        'node_modules/',
+        '__tests__/',
+        '*.config.{js,ts}',
+        '.next/',
+        'coverage/',
+        'dist/',
+        'build/',
+        '**/*.d.ts',
+        '**/*.test.{ts,tsx}',
+        '**/*.spec.{ts,tsx}',
+      ],
+      include: [
+        'app/**/*.{ts,tsx}',
+        'components/**/*.{ts,tsx}',
+        'lib/**/*.{ts,tsx}',
+      ],
+    },
   },
   resolve: {
     alias: {

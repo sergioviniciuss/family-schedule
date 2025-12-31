@@ -1,6 +1,10 @@
 name: ci
 on: [pull_request]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -54,6 +58,14 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'file:./test.db' }}
           TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL || 'file:./test.db' }}
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET || 'test-secret-key-for-ci-only' }}
+
+      - name: Report Coverage
+        if: always()
+        uses: davelosert/vitest-coverage-report-action@v2
+        with:
+          name: 'Coverage Report'
+          json-summary-path: './coverage/coverage-summary.json'
+          json-final-path: './coverage/coverage-final.json'
 
       - name: Build
         run: yarn build
