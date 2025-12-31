@@ -100,8 +100,7 @@ describe('Calendar', () => {
       const allButtons = screen.getAllByRole('button');
       const day15Button = allButtons.find((button) => {
         const text = button.textContent || '';
-        const htmlButton = button as HTMLButtonElement;
-        return text.includes('15') && !htmlButton.disabled;
+        return text.includes('15') && button.getAttribute('aria-disabled') !== 'true';
       });
       expect(day15Button).toBeDefined();
     });
@@ -109,8 +108,7 @@ describe('Calendar', () => {
     const allButtons = screen.getAllByRole('button');
     const day15Button = allButtons.find((button) => {
       const text = button.textContent || '';
-      const htmlButton = button as HTMLButtonElement;
-      return text.includes('15') && !htmlButton.disabled;
+      return text.includes('15') && button.getAttribute('aria-disabled') !== 'true';
     });
     
     expect(day15Button).toBeDefined();
@@ -166,11 +164,10 @@ describe('Calendar', () => {
       const allButtons = screen.getAllByRole('button');
       const day15Button = allButtons.find((button) => {
         const text = button.textContent || '';
-        const htmlButton = button as HTMLButtonElement;
-        return text.includes('15') && !htmlButton.disabled && !text.includes('→') && !text.includes('←');
+        return text.includes('15') && button.getAttribute('aria-disabled') !== 'true' && !text.includes('→') && !text.includes('←');
       });
       expect(day15Button).toBeDefined();
-      expect(day15Button).not.toBeDisabled();
+      expect(day15Button?.getAttribute('aria-disabled')).not.toBe('true');
     });
 
     it('should handle Date objects created from ISO strings correctly', async () => {
@@ -196,11 +193,10 @@ describe('Calendar', () => {
       const allButtons = screen.getAllByRole('button');
       const day15Button = allButtons.find((button) => {
         const text = button.textContent || '';
-        const htmlButton = button as HTMLButtonElement;
-        return text.includes('15') && !htmlButton.disabled && !text.includes('→') && !text.includes('←');
+        return text.includes('15') && button.getAttribute('aria-disabled') !== 'true' && !text.includes('→') && !text.includes('←');
       });
       expect(day15Button).toBeDefined();
-      expect(day15Button).not.toBeDisabled();
+      expect(day15Button?.getAttribute('aria-disabled')).not.toBe('true');
     });
 
     it('should correctly handle first day of month regardless of timezone', async () => {
@@ -224,20 +220,19 @@ describe('Calendar', () => {
       const allButtons = screen.getAllByRole('button');
       const day1Button = allButtons.find((button) => {
         const text = button.textContent || '';
-        const htmlButton = button as HTMLButtonElement;
-        return text.trim() === '1' && !htmlButton.disabled;
+        return text.trim() === '1' && button.getAttribute('aria-disabled') !== 'true';
       });
       expect(day1Button).toBeDefined();
-      expect(day1Button).not.toBeDisabled();
+      expect(day1Button?.getAttribute('aria-disabled')).not.toBe('true');
 
       // Day 11 should be disabled (outside range)
       const day11Buttons = allButtons.filter((button) => {
         const text = button.textContent || '';
         return text.includes('11') && !text.includes('→') && !text.includes('←');
       });
-      const day11Button = day11Buttons[0] as HTMLButtonElement;
+      const day11Button = day11Buttons[0];
       expect(day11Button).toBeDefined();
-      expect(day11Button.disabled).toBe(true);
+      expect(day11Button.getAttribute('aria-disabled')).toBe('true');
     });
   });
 });

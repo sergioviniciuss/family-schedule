@@ -21,7 +21,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 // Import routes after mocks are set up
-import { GET, POST } from '@/app/api/sleep-entries/route';
+import { GET, POST, DELETE } from '@/app/api/sleep-entries/route';
 
 // Mock NextAuth
 vi.mock('next-auth', () => ({
@@ -293,6 +293,141 @@ describe('Sleep Entries API', () => {
       });
 
       const response = await POST(request);
+      expect(response.status).toBe(401);
+    });
+  });
+
+  describe('DELETE /api/sleep-entries', () => {
+    it('should delete an existing sleep entry', async () => {
+      // Create a sleep entry
+      await prisma.sleepEntry.create({
+        data: {
+          userId,
+          locationId,
+          date: '2024-01-15',
+        },
+      });
+
+      const request = new NextRequest(
+        'http://localhost/api/sleep-entries?date=2024-01-15',
+        { method: 'DELETE' }
+      );
+
+      const response = await DELETE(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.date).toBe('2024-01-15');
+
+      // Verify entry was deleted
+      const entry = await prisma.sleepEntry.findUnique({
+        where: {
+          userId_date: {
+            userId,
+            date: '2024-01-15',
+          },
+        },
+      });
+      expect(entry).toBeNull();
+    });
+
+    it('should return 404 if entry does not exist', async () => {
+      const request = new NextRequest(
+        'http://localhost/api/sleep-entries?date=2024-01-15',
+        { method: 'DELETE' }
+      );
+
+      const response = await DELETE(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toBe('Entry not found');
+    });
+
+    it('should return 400 if date is missing', async () => {
+      const request = new NextRequest('http://localhost/api/sleep-entries', {
+        method: 'DELETE',
+      });
+
+      const response = await DELETE(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toBe('Date is required');
+    });
+
+    it('should return 400 if date format is invalid', async () => {
+      const request = new NextRequest(
+        'http://localhost/api/sleep-entries?date=invalid-date',
+        { method: 'DELETE' }
+      );
+
+      const response = await DELETE(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toContain('Invalid date format');
+    });
+
+    it('should not delete entries from other users', async () => {
+      // Create another user
+      const timestamp = Date.now();
+      const otherUser = await prisma.user.create({
+        data: {
+          email: `other-${timestamp}@example.com`,
+          password: await bcrypt.hash('password', 10),
+        },
+      });
+
+      const otherLocation = await prisma.location.create({
+        data: {
+          userId: otherUser.id,
+          name: 'Other Location',
+        },
+      });
+
+      await prisma.sleepEntry.create({
+        data: {
+          userId: otherUser.id,
+          locationId: otherLocation.id,
+          date: '2024-01-15',
+        },
+      });
+
+      const request = new NextRequest(
+        'http://localhost/api/sleep-entries?date=2024-01-15',
+        { method: 'DELETE' }
+      );
+
+      const response = await DELETE(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(404);
+      expect(data.error).toBe('Entry not found');
+
+      // Verify other user's entry still exists
+      const entry = await prisma.sleepEntry.findUnique({
+        where: {
+          userId_date: {
+            userId: otherUser.id,
+            date: '2024-01-15',
+          },
+        },
+      });
+      expect(entry).not.toBeNull();
+    });
+
+    it('should return 401 if not authenticated', async () => {
+      const { getServerSession } = await import('next-auth');
+      vi.mocked(getServerSession).mockResolvedValue(null);
+
+      const request = new NextRequest(
+        'http://localhost/api/sleep-entries?date=2024-01-15',
+        { method: 'DELETE' }
+      );
+
+      const response = await DELETE(request);
       expect(response.status).toBe(401);
     });
   });
