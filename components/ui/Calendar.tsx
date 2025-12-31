@@ -280,34 +280,32 @@ export const Calendar = ({
               )}
               type="button"
             >
+              {entry && onDeleteEntry && (
+                <button
+                  onClick={(e) => handleDeleteClick(e, dateStr)}
+                  className="absolute top-0.5 right-0.5 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors z-10 p-0.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                  aria-label="Delete entry"
+                  title="Delete entry"
+                  type="button"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-3 w-3"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              )}
               <div className="flex flex-col items-center justify-center h-full p-1">
                 <span className="text-xs mb-1">{date.getDate()}</span>
                 {entry && (
-                  <div className="flex flex-col items-center gap-1 w-full">
-                    <LocationBadge location={entry.location} size="sm" className="text-[10px]" />
-                    {onDeleteEntry && (
-                      <button
-                        onClick={(e) => handleDeleteClick(e, dateStr)}
-                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                        aria-label="Delete entry"
-                        title="Delete entry"
-                        type="button"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-3 w-3"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
+                  <LocationBadge location={entry.location} size="sm" className="text-[10px]" />
                 )}
               </div>
             </button>
