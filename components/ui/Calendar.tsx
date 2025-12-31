@@ -271,7 +271,7 @@ export const Calendar = ({
               tabIndex={inRange ? 0 : -1}
               onClick={() => handleDateClick(date)}
               onKeyDown={(e) => {
-                if (inRange && (e.key === 'Enter' || e.key === ' ')) {
+                if (inRange && (e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
                   e.preventDefault();
                   handleDateClick(date);
                 }
