@@ -81,4 +81,3 @@ describe('StatsCard', () => {
     expect(screen.getByText('2')).toBeInTheDocument();
   });
 });
-

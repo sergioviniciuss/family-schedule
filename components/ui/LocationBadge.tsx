@@ -29,4 +29,3 @@ export const LocationBadge = ({ location, className, size = 'md' }: LocationBadg
     </span>
   );
 };
-
