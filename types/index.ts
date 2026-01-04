@@ -36,4 +36,3 @@ export interface SleepEntry {
 export interface SleepEntryWithLocation extends SleepEntry {
   location: Location;
 }
-

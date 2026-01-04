@@ -1,0 +1,7 @@
+# Code Style Rules
+
+- Do NOT add trailing empty lines at the end of files
+- Files should end with a single newline character (if any)
+- Do NOT add extra whitespace or empty lines unless necessary for readability
+- Preserve existing formatting unless explicitly asked to reformat
+- When making changes, only modify what's necessary - don't reformat unrelated code

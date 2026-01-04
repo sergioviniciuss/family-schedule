@@ -163,4 +163,3 @@ describe('Calendar date range integration', () => {
     });
   });
 });
-

@@ -50,4 +50,3 @@ model SleepEntry {
   @@index([userId])
   @@index([date])
 }
-

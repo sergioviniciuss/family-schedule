@@ -432,4 +432,3 @@ describe('Sleep Entries API', () => {
     });
   });
 });
-
